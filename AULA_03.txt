@@ -1,0 +1,173 @@
+######### AULA 03 ######
+#GGPLOT#
+setwd("C:/Users/USER/Desktop/MESTRADO/SCRIPTS R MESTRADO/PPGBA")
+gebdata <- read.csv("gebdata.csv",sep=";")
+moodata <- read.csv("moorea.csv",sep=";")
+library(tidyverse)
+library(ggplot2)
+library(gridExtra)
+library(GGally)
+
+#HISTOGRAMA
+dist_normal <- data.frame(x = rnorm(10000, mean = 0, sd = 1))
+#plot
+ggplot(data = dist_normal, aes(x = x))+ #dados
+  geom_histogram(bins=50) #geometria
+#ou
+ggplot()+
+  geom_histogram(data = dist_normal, aes(x = x),bins=50)+
+  labs(x="comprimento (m)", y= "frequencia",title="histograma") #labels
+#cores sobrepostas
+moodata %>% ggplot()+
+  geom_histogram(aes(cover,fill=taxa),
+                 bins=10) +
+  labs(title = "Com sobreposiçao")
+#cores não sobrepostas
+moodata %>% ggplot()+
+  geom_histogram(aes(cover,fill=taxa),
+                 bins=10,alpha = .4, position="dodge") +
+  labs(title = "Sem sobreposiçao")
+
+colors() #cores com nome
+
+moodata %>% ggplot()+
+  geom_histogram(aes(cover,fill=taxa),
+                 bins=10,alpha = .4, position="identity") +
+  scale_fill_manual(values = c("darkorange", "darkorchid", "cyan4")) +
+  theme_bw(base_size = 14) +
+  labs(x = "Cobertura",
+       y = "Frequência", fill = "Grupos")
+
+#DENSITY PLOT 
+g1 <- moodata %>% 
+  ggplot()+geom_density(aes(cover),fill="cyan4",alpha=.4)
+
+#varias categorias
+g2 <- moodata %>% 
+  ggplot()+geom_density(aes(cover,fill=taxa),alpha=.4)+
+  scale_fill_manual(values = c("darkorange", "darkorchid", "cyan4")) +
+  labs(x="cobertura",y="densidade",fill="táxons",title = "Com transparência")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_y_continuous(limits = c(0,0.1),
+                     breaks = seq(0,0.1, by = 0.05))+
+  theme_bw(base_size = 14)
+
+#BARPLOT
+g3 <- moodata%>% 
+  group_by(habitat,taxa)%>% 
+  summarize(media=mean(cover))%>% 
+  ggplot()+ 
+  geom_bar(aes(habitat, media, fill=taxa),
+           stat="identity")#,position="dodge") #não empilhado +coord_flip() #deitado +coord_polar() #circular 
+
+
+g4 <- moodata%>% 
+  group_by(habitat,taxa)%>% 
+  summarize(media=mean(cover),desvio=sd(cover))%>% 
+  ggplot()+ geom_errorbar(aes(habitat, ymin=0, 
+                              ymax=media+desvio,color=taxa), position=position_dodge(width=0.9),width=0)+ 
+  geom_bar(aes(habitat, media,fill=taxa),color="black",stat="identity", 
+           position="dodge")+labs(tag="a)")
+
+#arranjar gráficos
+gridExtra::grid.arrange(g1, g2, g3, g4,nrow = 2)
+
+#arranjos mais complexos
+library(patchwork)
+g1 / (g2 | g3 | g4)
+g1 / g2 / g3
+(g1+((g3 + g2) / g3))/g4
+
+#PONTOS
+moodata %>% 
+  group_by(taxa) %>% 
+  summarise(media=mean(cover),desvio=sd(cover),error=sd(cover)/sqrt(n()),color="dark gray") %>% 
+  ggplot()+
+  geom_point(aes(taxa,media,color=taxa))+
+  geom_errorbar(aes(taxa,ymin=media-desvio,
+                    ymax=media+desvio,color=taxa),width=.5)+
+  geom_line(aes(taxa,media,group=1),color="red",lwd=.5,linetype="dashed")
+
+#BOXPLOT
+moodata %>% 
+  filter(habitat=="Backreef",year=="2006") %>% 
+  ggplot()+
+  geom_boxplot(aes(taxa,cover,fill=taxa),
+               color="black") #contorno
+#,outlier.shape=NA) #remove outliers
+
+#Formato diferente
+moodata %>% 
+  filter(habitat=="Backreef",year=="2006") %>% 
+  ggplot(aes(taxa,cover,fill=taxa))+
+  geom_boxplot(color="black",outlier.color = "red",outlier.size=.5,notch=T)+
+  geom_jitter(size=.5)
+
+#várias boxes por categoria
+moodata %>% 
+  ggplot()+geom_boxplot(aes(factor(year),cover,fill=taxa),
+  outlier.shape=NA)
+
+#VIOLIN PLOT
+ggplot(moodata, aes(taxa,cover,fill=taxa)) +
+  geom_violin()+
+  geom_boxplot(width=.07,fill="gray")
+
+#SCATTER PLOT
+gebdata %>% ggplot()+
+  geom_point(aes(precipitation,altitude,color=taxa,shape=taxa),size=2)
+
+gebdata %>% ggplot()+geom_point(aes(precipitation,altitude,
+                                    fill=taxa,shape=taxa),size=2)+
+  scale_shape_manual(values=c(21,22,24))+
+  scale_fill_manual(values=c("orange","black","white"))+
+  theme_bw()+labs(x="Altitude (m)",y="Precipitação (mm)")+
+  geom_smooth(aes(precipitation,altitude),method=lm,color="darkred")+
+  scale_x_log10()+
+  scale_y_log10()
+
+#HEATMAP
+gebdata %>%
+  filter(taxa=="Mammals" & biogeo=="Afrotropic" & mass>50000 & mass<250000) %>% 
+  ggplot()+geom_tile(aes(diet,spp,fill=mass))+
+  scale_x_discrete(position="top")+
+  scale_y_discrete(position="left")
+
+#ordem específica de fatores
+gebdata$diet <- factor(gebdata$diet)
+glimpse(gebdata)
+gebdata$diet <- fct_relevel(gebdata$diet,'Herbivore','Carnivore','Omnivore') 
+
+gebdata %>%
+  filter(taxa=="Mammals" & biogeo=="Afrotropic" & mass>50000 & mass<250000) %>% 
+  ggplot()+geom_point(aes(diet,spp,size=mass,color=diet))+
+  scale_x_discrete(position="top")+
+  scale_y_discrete(position="left")
+
+
+#DESAFIO: FAÇA UM HEATMAP COM A COBERTURA MÉDIA DE CORAIS POR HÁBITAT POR ANO
+moodata %>% 
+  group_by(year,taxa,habitat)%>%
+  summarise(media=mean(cover)) %>% 
+  spread(key=taxa,value=media) %>% 
+  ggplot()+geom_tile(aes(habitat,year,fill=Coral))
+
+
+#MULTIPLOS GRAFICOS PAREADOS
+#v. continuas
+gebdata %>%
+  dplyr::select(density, mass,
+                range, temperature, precipitation) %>%
+  GGally::ggpairs(aes(color = gebdata$taxa)) +
+  scale_colour_manual(values = c("darkorange", "purple", "cyan4")) +
+  scale_fill_manual(values = c("darkorange", "purple", "cyan4")) +
+  theme_bw()
+
+#com variaéveis categóricas
+gebdata %>%
+  dplyr::select(biogeo, mass,
+                range, temperature, precipitation) %>%
+  GGally::ggpairs(aes(color = gebdata$taxa)) +
+  scale_colour_manual(values = c("darkorange", "purple", "cyan4")) +
+  scale_fill_manual(values = c("darkorange", "purple", "cyan4")) +
+  theme_bw()

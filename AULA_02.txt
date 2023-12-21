@@ -1,0 +1,204 @@
+#Tools > global options > appearance
+system.time({
+  set.seed(123)
+  x <- rnorm(500,250,50)
+  num <- 1000
+  x.means <- numeric(1000)
+for(i in 1:num){
+  amostra <- sample(x,size=10,replace=T)
+  x.means[i] <- mean(amostra)
+}})
+
+sd
+aov
+
+######### AULA 02 ######
+#TIDYVERSE#
+setwd("C:/Users/USER/Desktop/MESTRADO/SCRIPTS R MESTRADO/PPGBA")
+
+#pacotes necessários
+install.packages("tidyverse","flextable","reshape2","pacman")
+library(tidyverse)
+library(flextable)
+library(reshape2)
+
+#ou
+pacman:: p_load("tidyverse","flextable","reshape2")
+
+##### DPLYR ####
+gebdata <- read.csv("gebdata.csv",sep=";")
+
+#read.tsv(".txt")
+#read_excel(".xlsx", sheet="")
+
+#curadoria inicial
+head(gebdata)
+summary(gebdata)
+glimpse(gebdata)
+any(is.na(gebdata))
+nrow(gebdata)
+ncol(gebdata)
+colnames(gebdata)
+count(gebdata,taxa,biogeo)
+
+#filter
+sample <- dplyr::filter(gebdata, taxa == "Mammals" & diet == "Herbivore"|diet=="Carnivore")
+sample2 <- filter(gebdata, mass <= 50)
+repneo <- filter(gebdata, taxa =="Lizards" & biogeo == "Neotropic" & mass<1000)
+
+###### CORTAR #####
+o1 <- dplyr::select(gebdata, -biogeo) ## OU -4
+o2 <- select(gebdata, spp, mass)
+o3 <- select(gebdata, spp,5:10)
+o4 <- select(gebdata,c(1,5:10)) 
+
+gebdata <- select(gebdata, -X) #REMOVER COL1
+q1 <- select(gebdata, c(2,5:10)) #ISOLAR COL2 + INTERVALO (DADOS BIO.)
+q2 <- select(gebdata,c(1:4,8))
+select(gebdata,sample(3)) #ISOLAR 3 COLS ALEATÓRIAS 
+
+# SELECIONAR CARNIVOROS + INTERVALO
+carnivores <- filter(gebdata, diet =="Carnivore") 
+q3 <- select(carnivores,c(1:2,6))
+
+#remover coluna como vetor
+v <- dplyr::pull(gebdata,mass) 
+head(v, 15)
+
+#coluna em ordem crescente
+t_arrange <- dplyr::arrange(gebdata,mass)
+head(t_arrange)
+
+#decrescente
+t_arrange <- dplyr::arrange(gebdata,desc(mass))
+head(t_arrange)
+
+## Seleciona linhas
+linhas <- dplyr::slice(gebdata,c(1:3, 300:n()))
+head(linhas)
+
+## Seleciona linhas - head
+slice_head <- dplyr::slice_head(gebdata,n = 5)
+head(slice_head)
+
+## Seleciona linhas - max
+slice_max <- dplyr::slice_max(gebdata,mass, n = 5)
+head(slice_max)
+
+## Seleciona linhas - sample
+slice_sample <- dplyr::slice_sample(gebdata,n = 30)
+head(slice_sample)
+
+#somar colunas em uma nova
+m <- select(gebdata,mass,density)
+gebdata$sum <- rowSums(m)
+gebdata <- select(gebdata,-sum) #desfazer
+
+#ou indexar
+k1 <- gebdata[,-c(1:5)]
+k2 <- gebdata[,-c(6:10)]
+
+
+#juntar
+bind_rows <- dplyr::bind_rows(k1,k2,.id = "id") #identifica as linhas
+head(bind_rows)
+
+bind_cols <- dplyr::bind_cols(k1,k2,.name_repair = "unique") #confere nome de colunas
+head(bind_cols)
+
+#### AGRUPAR ###
+summarise(gebdata,media=mean(mass),desvio=sd(mass),numero=n())
+grupo <- group_by(gebdata, biogeo)
+glimpse(grupo)
+sumbiogeo <- summarise(grupo,media=mean(mass),desvio=sd(mass),numero=n())
+sumbiogeo
+
+#MODIFICAR
+X1 <- mutate(sumbiogeo, percent = (numero/sum(numero))*100)
+X2 <- mutate(sumbiogeo, numero = (numero/sum(numero))*100)
+X2 <- mutate(gebdata,log_mass = log(mass))
+
+###### PIPES ######
+# ATALHO: CTRL+SHIFT+M
+m <- gebdata %>%
+  group_by(biogeo)%>% 
+  summarise(media=mean(mass),desvio=sd(mass),numero=n())%>%
+  mutate(percent = (numero/sum(numero))*100) 
+
+###### TROCAR LINHAS X COLUNAS ###
+gebdata %>% 
+  group_by(biogeo,diet)%>% 
+  summarise(media=mean(mass))%>%
+  spread(key=diet,value=media) %>% #longa -> larga
+  flextable() 
+#print("docx") # EXPORTAR TABELA EM .DOCX
+
+spp_spread <- gebdata%>% 
+  select(spp,biogeo,mass) %>%
+  spread(key=biogeo,value=mass,fill=0)
+
+#juntar
+dados_melt <- reshape2::melt(gebdata)
+
+#EXERCÍCIO 1 : CRIE UMA TABELA QUE INDIQUE A MÉDIA, DESVIO, SOMA E 
+#NÚMERO DE ESPÉCIES EM CADA TÁXON POR DIETA
+
+tab <- gebdata %>% 
+  group_by(taxa,diet) %>%
+  summarise(media=mean(mass),desvio=sd(mass),soma=sum(mass),riqueza=n())
+
+#EXERCÍCIO 2: CRIE UMA TABELA DO "ALCANCES" (RANGE) MÉDIOS DE CADA ESPÉCIE
+#COMO LINHAS E AS PROVÍNCIAS BIOGEOGRÁFICAS COMO COLUNAS
+
+n <- gebdata %>% 
+  group_by(spp,biogeo) %>%
+  summarise(media=mean(round(range))) %>% 
+  spread(key=biogeo,value=media,fill=0)
+
+
+#STRINGR
+
+stringr::str_length(string = "laben")
+K <- stringr::str_split(string = "l-a-b-e-n", pattern = "-",
+                   simplify = T)
+K[1:3] 
+a <- str_extract(string = carnivores$spp, pattern = "Ac")
+carnivores$taxa <- stringr::str_sub(string = carnivores$taxa, end = 3) #abreviar
+maiusculas <- stringr::str_to_upper(string = gebdata$spp)
+head(maiusculas)
+carnivores$biogeo <- stringr::str_replace(string = carnivores$biogeo, pattern = "i", replacement = "y")
+carnivores$spp <- stringr::str_sort(x = carnivores$spp,dec=T) #ordem alfabetica ao contrário
+
+#Primeira letra maíscula nas colunas
+carnivores <- carnivores %>%
+  dplyr::rename_with(stringr::str_to_title)
+
+#FORCATS
+gebdata$taxa <- factor(gebdata$taxa)
+gebdata$diet <- factor(gebdata$diet)
+glimpse(gebdata) 
+
+# CRIAR COLUNAS COM NOMES ALTERADOS
+gebdata$new <- fct_recode(gebdata$taxa,
+                          peninha = "Birds",
+                          peludo = "Mammals",
+                          escamoso = "Lizards")
+
+# ALTERAR COLUNA JÁ EXISTENTE
+gebdata$taxa <- fct_recode(gebdata$taxa,
+                           Diapsida = "Birds",
+                           Synapsida = "Mammals",
+                           Diapsida = "Lizards")
+
+#MUDAR ORDEM DOS FATORES P/ ORDEM ESPECÍFICA
+f <- fct_relevel(gebdata$diet,"Omnivore","Carnivore","Herbivore") %>% head()
+f
+#ordem inversa
+fct_rev(f) %>% head()
+
+#DO MENOR PRO MAIOR
+fct_reorder(gebdata$diet, gebdata$mass) %>% head() #do menor pro maior
+fct_reorder(gebdata$diet, gebdata$mass,.desc=T) %>% head() #do maior pro menor
+
+#exportar planilha
+write.csv(gebdata, "tabela2.csv")

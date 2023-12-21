@@ -1,0 +1,132 @@
+#OUTPUT: html_document,
+pdf_document, word_document
+
+#APP PARA EQUAÇÕES: SNIP
+
+#DOCUMENTO PÚBLICO: PUBLISH > RPUBS
+
+#A PARTIR DE TEMPLATE DE JOURNAL 
+
+library(rticles)
+
+File > new > Rmarkdown > from template 
+Procurar arquivo '.bib' no diretório
+scholar > cite > bibtex
+colar no arquivo .bib e citar no texo como @... 
+
+---
+title: "Meu primeiro markdown"
+header-includes:
+ - \usepackage{times}
+ - \usepackage{setspace}
+ - \usepackage{inputenc}
+ - \usepackage[brazil]{babel}
+author: "Rodrigo Alves"
+date: "2023-03-19"
+output: pdf_document
+fontsize: 12pt
+geometry: "left = 2.5cm, right = 2cm, top = 2cm, bottom = 2cm"
+inputenc: utf8
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Tópico
+
+```{=tex}
+\setlength{\parindent}{1.25cm}
+\setstretch{1.25}
+```
+Sintaxe básica: **Negrito**, *itálico*, N~2~, Na^+^
+
+## Subtópico
+
+- Hiperlink: [RStudio](https://www.rstudio.com)
+ 
+- Figura: 
+
+![](C:\Users\USER\Desktop\MESTRADO\SCRIPTS R MESTRADO\XARINGAN_PRESENTATIONS\laben.png)
+
+Adicionar nota de rodapé^[nota de rodapé]
+
+
+## Expressões matemáticas
+
+1. 
+$$ f(x) = (x+2)^2$$
+
+2.
+$$ \sum_{i=1}^n=\frac{\pi^2}{n_i}$$
+
+3.
+$$\begin{pmatrix}
+a_{1,1} & a_{1,2} & \cdots\\
+a_{2,1} & a_{2,2} & \cdots\\
+\vdots & \vdots & \ddots
+\end{pmatrix}$$
+
+## Chunks
+```{r cars}
+summary(cars)
+```
+
+## Plots
+```{r pressure, echo=FALSE, warning = FALSE}
+par(mar = c(4, 4, .2, .1))
+plot(cars, pch = 19)
+plot(pressure, pch = 17)
+```
+
+```{r echo = FALSE, out.height="30%",out.width="20%", fig.align='left',fig.cap='imagem'}
+
+knitr::include_graphics("laben.png")
+
+```
+
+```{r tables-mtcars, echo=FALSE}
+knitr::kable(iris[1:5, ], caption = 'tabela')
+```
+
+############### EXTRA: CHATGPT NO RSTUDIO ##############################
+
+install.packages("gptstudio")
+install.packages("pak")
+pak::pak("JamesHWade/gpttools")
+pak::pak("MichelNivard/gptstudio")
+Sys.setenv(OPENAI_API_KEY = "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")
+
+#inserir comentários no código
+
+data(dune)
+data(dune.env)
+dune.dist <- vegdist(dune)
+dune.ano <- with(dune.env, anosim(dune.dist, Management))
+summary(dune.ano)
+plot(dune.ano)
+
+#GPT IN SOURCE
+
+#write a R function that computates the mode of a density distribution
+#make a barplot using the 'dune.env' dataset from vegan package with ggplot2
+#write an anova code with 'Moisture' and 'Management' as treatments and 'A1' as the response variable using 'dune.env' dataset 
+
+#Correção ortográfica
+
+A progamassaum em R é uma deliçia
+
+##################BIBLIOMETRIX###############
+#SCOPUS INDEX: SCIENCE DIRECT
+library(bibliometrix)
+s <- convert2df('C:/Users/USER/Desktop/cite.bib',dbsource='scopus',format='bibtex')
+f <- mergeDbSources(s,w,remove.duplicated = T) #joint searches from different sources (e.g., WoS and Scopus)
+
+write.table(f,'C:/Users/USER/Desktop/cite.xlsx',sep=';',row.names=F)
+res <- biblioAnalysis(s)
+summary(object=res,k=20) # k=how many articles for each category (e.g. top 10)
+
+plot(res,k=10)
+library("xlsx")
+write.xlsx(s,'C:/Users/USER/Desktop/cite.xlsx')
+biblioshiny() #formats: .xlsx and .R

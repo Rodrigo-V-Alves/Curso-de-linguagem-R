@@ -1,0 +1,183 @@
+######### AULA 04 ######
+#GGPLOT 2#
+setwd("C:/Users/USER/Desktop/MESTRADO/SCRIPTS R MESTRADO/PPGBA")
+moodata <- read.csv("moorea.csv",sep=";")
+library(tidyverse)
+
+#cobertura de coral ao longo dos anos
+moodata %>% 
+  filter(taxa=='Coral') %>% 
+  group_by(year,habitat) %>% 
+  summarize(media=mean(cover),desvio=sd(cover)) %>% 
+  ggplot()+geom_point(aes(year,media,color=habitat), position=position_dodge(width=.5))+
+  geom_errorbar(aes(year,ymin=media-desvio,ymax=media+desvio,color=habitat),position=position_dodge(width=.5))+
+  geom_line(aes(year,media,color=habitat),position=position_dodge(width=.5))+theme_classic()+
+  scale_x_continuous(breaks=seq(2005,2020,by=5))
+
+#'envelope (geom_ribbon)
+moodata %>% 
+  filter(taxa=='Coral') %>% 
+  group_by(year,habitat) %>% 
+  summarize(media=mean(cover),desvio=sd(cover)) %>% 
+  ggplot()+
+  geom_ribbon(aes(year,ymin=media-desvio,ymax=media+desvio,fill=habitat),alpha=.4)+
+  geom_line(aes(year,media,color=habitat))+theme_classic()+
+  scale_x_continuous(breaks=seq(2005,2020,by=5))
+
+#curva suavizada
+moodata%>% 
+  filter(taxa=="Coral")%>% 
+  ggplot()+
+  geom_smooth(aes(year,cover,color=habitat,fill=habitat))+#se=F remove ribbon
+  labs(x="anos",y="cobertura",caption="grafico 1")
+
+#gam
+moodata%>% 
+  filter(taxa=="Coral")%>% 
+  ggplot()+
+  geom_point(aes(year,cover,color=habitat),
+             alpha=0.1,position="jitter")+
+  geom_smooth(aes(year,cover,fill=habitat,color=habitat),method='gam')+
+  annotate(geom="rect",xmin=2010,xmax=2012,ymin=-Inf,ymax=Inf,alpha=.3,fill="blue")+#geom_rect
+  annotate(geom="text",x=2008,y=75,label="grafico",fontface="bold")
+  
+
+#EXERCICIOS
+#PLOTE A VARIAÇÃO MEDIA DA COBERTURA DE TURF DE ALGAS POR HABITAT AO LONGO DOS ANOS
+#COM 'ENVELOPE' SEMI-TRANSPARENTE DE DISPERSÃO (DESVIO PADRÃO)
+
+moodata%>% 
+  filter(taxa=="Algal Turf")%>% 
+  group_by(year, habitat)%>% 
+  summarize(media=mean(cover),desvio=sd(cover))%>% 
+  ggplot()+ geom_ribbon(aes(year,ymin=media-desvio,ymax=media+
+                              desvio,fill=habitat),alpha=.2)+
+  geom_line(aes(year,media,color=habitat))
+
+#FAÇA O MESMO PORÉM CONSIDERANDO APENAS OS ANOS A PARTIR DE 2013
+# E UTILIZANDO O MÉTODO 'GAM' COM O 'ESPALHAMENTO' DOS PONTOS
+#E MARCAÇÕES DE ANO A ANO NO EIXO TEMPORAL (X)
+
+moodata%>% 
+  filter(taxa=='Coral')%>% #jeito errado: filter (year > 2012)
+  ggplot()+
+  geom_point(aes(year,cover,color=habitat),
+             alpha=0.1,position="jitter")+
+  geom_smooth(aes(year,cover,color=habitat,fill=habitat))+
+  labs(x="Years",y="Cover",title="grafico")+
+  coord_cartesian(xlim=c(2013,2019))+
+  scale_x_continuous(breaks=seq(2013,2019,by=1))
+
+# GRAFICO DE AREA #
+moodata%>% 
+  group_by(year,taxa)%>% 
+  summarize(media=mean(cover))%>% 
+  ggplot()+ geom_area(aes(year,media,fill=taxa)) 
+
+#COMPOSIÇÃO DE GRÁFICOS (FACETAS)
+moodata%>%
+  group_by(year,habitat,taxa)%>%
+  summarize(media=mean(cover))%>%
+  ggplot()+
+  geom_line(aes(year,media, color=habitat))+
+  facet_wrap(~taxa)
+
+moodata %>% group_by(year,taxa,habitat) %>% 
+  summarise(md=mean(cover),s=sd(cover)) %>% 
+  ggplot() +geom_point(aes(year,md,color=taxa,shape=taxa)) +
+  geom_line(aes(year,md,color=taxa))+
+  geom_errorbar(aes(x=year,ymin=md-s,ymax=md+s,color=taxa))+
+  theme_bw() +
+  facet_grid(habitat~taxa,scales = "free_y")+ #ou 'fixed'
+  labs(y="cobertura",title='grafico',subtitle='grafico')+
+  scale_color_manual(values=c('#F1C40F','#D4AC0D','#9A7D0A')) #HTML COLORS (MANUAL)
+
+#PALETA DE CORES PRONTA
+library(paletteer)
++paletteer::scale_fill_paletteer_d("rcartocolor::Temps")+
+  paletteer::scale_color_paletteer_d("rcartocolor::Temps") 
+
+moodata %>% group_by(year,taxa,habitat) %>% 
+  summarise(md=mean(cover),s=sd(cover)) %>% 
+  ggplot() +geom_point(aes(year,md,color=taxa)) + 
+  geom_errorbar(aes(x=year,ymin=md-s,ymax=md+s,color=taxa))+
+  theme_bw() +
+  facet_wrap(habitat~taxa,scales = "free_y",ncol=3) + labs(y="cobertura")
+
+#EXERCÍCIO
+#PLOTE A VARIAÇÃO TEMPORAL EM LINHAS DOS TRES GRUPOS (TURF, CORAL E CCA) 
+#INDICANDO COM RETANGULOS OS INTERVALOS DE TEMPO MAIS QUENTES (DIGAMOS, 2005-2009)
+#E MAIS FRIOS (DIGAMOS, 2010-2014) EM CORES DISTINTAS E ESCREVER NO GRAFICO
+
+moodata %>% 
+  group_by(year,taxa) %>% 
+  summarise(media=mean(cover)) %>% 
+  ggplot() + geom_line(aes(year,media,color=taxa))+
+  annotate(geom="rect",xmin=2005,xmax=2009,ymin=0,ymax=66,alpha=.3,fill="blue")+
+  annotate(geom="rect",xmin=2010,xmax=2014,ymin=0,ymax=66,alpha=.3, fill="red")+
+  annotate(geom="text",x=2007,y=70,label="Coldest years",color="blue",fontface="bold")+
+  annotate(geom="text",x=2012,y=70,label="Hottest years",color="red",fontface="bold")
+
+#legendas
+theme(legend.position = "right",#theme(legend.position = c(.9, .7)),
+      legend.text = element_text(size=8,colour = "red"),
+      legend.title = element_text(face = "bold",family="serif"),
+      legend.box.background = element_rect(color="red", size=2))
+#eixos
+theme(axis.title.x = element_text(face = "bold", size = 20,
+                                  colour = "cyan4"),
+      axis.text.x = element_text(size = 14, angle=45),
+      axis.title.y = element_text(face = "bold", size = 20,
+                                  colour = "cyan4"),
+      axis.text.y = element_text(size = 14))
+
+theme(panel.grid.minor = element_blank(), #linahs de grade principais
+      panel.grid.major = element_blank(), #retirar todas 
+      panel.border = element_rect(size = 2, colour = "black",fill = NA), #bordas
+      axis.line = element_line(size = 1)) #eixos x e y
+
+#CRIAR TEMAS PERSONALIZADOS: theme_update() e theme_set()
+
+#GRAFICO DE PONTOS COM 'ETIQUETAS'
+moodata %>%
+  group_by(habitat,taxa)%>%
+  summarize(media=mean(cover))%>%
+  ggplot()+
+  geom_point(aes(habitat,media, color=taxa))+
+  ggrepel::geom_label_repel(aes(habitat,media, label=taxa, fill=taxa), color="white", 
+                   label.size = NA, #contorno das labels 
+                   label.r=0.7, #'arredondamento' das bordas
+                   label.padding=0.4, #tamanho da caixa
+                   show.legend=FALSE, #remover elementos na legenda
+                   fontface="bold.italic", family="serif")
+
+#FINALIZAR GRÁFICO PARA PUBLICAÇÃO
+g1 <- moodata%>% 
+  ggplot()+
+  geom_point(aes(year,cover,color=taxa),
+             alpha=0.1,position="jitter")+
+  geom_smooth(aes(year,cover,fill=taxa,color=taxa),method='gam')+
+  theme_bw()+
+  facet_wrap(~habitat)+
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        axis.title.x = element_text(face = "bold", size = 13,
+                                    colour = "black",vjust=-1),
+        axis.text.x = element_text(size = 10,color='black'),
+        axis.title.y = element_text(face = "bold", size = 13,
+                                    colour = "black",vjust=1),
+        axis.text.y = element_text(size = 10,color='black'),
+        legend.text = element_text(size=10,colour = "black"),
+        legend.title = element_blank())+
+  scale_fill_manual(values=c('#97D8C4','#4B5043','#F4B942'))+
+  scale_color_manual(values=c('#97D8C4','#4B5043','#F4B942'))+
+  scale_x_continuous(lim=c(2004,2020),breaks=seq(2005,2020,by=5))+
+  labs(x='Years',y='Cover(%)')
+
+#salvar
+ggsave(filename = "g1.jpeg",
+       plot = g1,
+       width = 15,
+       height = 10,
+       dpi =300,
+       units = "cm")

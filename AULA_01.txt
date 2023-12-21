@@ -1,0 +1,219 @@
+#AULA 01##
+
+#Atalhos no teclado
+
+<- = "Alt" + "-"
+Salvar = "Ctrl" + "s"
+
+# Indicar diretório
+setwd("C:/Users/USER/Desktop/MESTRADO/SCRIPTS R MESTRADO")
+
+#Operações básicas
+1+1
+2*4
+2**4
+2^4
+1*2+2/2*2
+((1*2))+(2*2)*2
+v1 <- 40
+v2 <- 50
+v1+v2 #soma
+rep(1:5,times=10)
+ob <- rep(1:5,each=2)
+sum(ob)
+mean(ob)
+sd(ob)
+
+#pacotes
+install.packages("vegan","devtools")
+library(vegan)
+library(devtools)
+devtools::install_github("")
+#
+data(dune)
+?data
+
+#classes de objetos
+
+#vetores
+concatenado <- c(1,2,3,4,5)
+sequencia <- 1:5
+espaços <- seq(from=0,to=200,by=50)
+espaços
+colagem <- paste("amostra",1:10)
+colagem
+amostra <- sample(1:1000,10)
+?seq
+
+set.seed(2023)
+sample(0:70,6) #números da mega sena
+coerção <- c(concatenado,espaços)
+
+ambiente <- factor(sample(c('recife','prado','mangue'),
+                          size=20
+                          ,replace=T),
+                   levels=c('recife','prado','mangue'))
+
+Ambiente <- factor(sample(c('recife','prado','mangue'),
+                          size=20
+                          ,replace=T))
+Ambiente
+
+#matriz
+n <- 1:12
+m1 <- matrix(n,nrow=4,ncol=3,byrow=T)
+m2 <- matrix(n,4,3,byrow=F)
+m1+m2
+cbind(coerção,colagem)
+rbind(coerção,colagem)
+
+#arrays
+ar <- array(sample(c(0,1),75,rep=T),dim=c(5,5,3))
+ar
+
+#data frame
+spp <- c("a","b","c")
+ab <- c(10,6,2)
+amb <- factor(c('recife','prado','mangue'))
+df <- data.frame(spp,ab,amb)
+df <- data.frame(especies=spp,
+                 densidade=ab,
+                 ambiente=amb)
+df
+as.data.frame(m1)
+
+#listas
+
+lista <- list(vetor=rep(1,20),
+              fator=factor(1,1),
+              matriz=cbind(c(1,2),c(1,2)))
+lista
+
+#funções
+
+erro <- function(x){sd(x)/sqrt(length(x))}
+numeros <- c(1,4,5,7,8)
+erro(numeros)
+
+borabora <- function(x,y){
+  mu <- x**y
+  return(mu)
+}
+
+borabora(2,3)
+
+##manipular objetos unidimensionais##
+#indexação
+set.seed(2023)
+s <- sample(seq(1,10,.5))
+s
+s[5]
+s[1:3]
+s[-4]
+s[-(2:5)]
+s[s>2]
+s[s>2 & s<4]#e
+s[s<3|s>5]#ou
+
+min(s)
+max(s)
+range(s)
+length(s)
+sum(s)
+mean(s)
+var(s)
+erro(s)
+round(var(s))
+order(s)
+rm(m1) #remover ob. específico
+rm(list=ls()) #limpar environment
+summary(s)
+unique(s)
+
+#listas
+
+lista[1]
+lista[-1]
+lista[[1]]
+lista[[2]]
+lista$matriz
+length(lista)
+names(lista)
+
+#multidimensionais
+
+#matriz
+ma <- matrix(1:12,3,4)
+ma
+ma[3,]
+ma[,1]
+ma[1,2]
+ma[1,1:2]
+ma[1,c(1,3)]
+ma[-1,]
+ma[1,3] <- 20
+ma
+ma[-(1:2),-c(1,3)]
+
+#dataframe
+df <- data.frame(sp=(paste("sp",1:10,sep=" ")),
+                 ab=1:10,
+                 local=factor(rep(c('mangue','recife'),
+                                  each=5)))
+df
+df[,1]
+df['local']
+length(df$ab)
+df$ab <- as.character(df$ab)
+mode(df$ab)
+df$presença <- sample(0:1,size=nrow(df)) #criar nova coluna
+df
+df[df$ab>=4 & df$local=='mangue',]
+
+head(df)
+tail(df)
+nrow(df)
+ncol(df)
+subset(df,ab>1 & ab<5)
+rownames(df)
+colnames(df)
+colnames(df)[2] <- "abundancia"
+str(df)
+summary(df)
+table(df$sp)
+t(df)
+
+#NAs
+d <- data.frame(var1=c(1,4,3,5,NA),
+                var2=c(1,4,5,2,6))
+is.na(d) #É um NA?
+any(is.na(d)) #há algum valor não atribuído?
+df_sem_na <- na.omit(d) #omitir linhas com NAs
+d[is.na(d)] <- 0 #substituir NAs (por zero)
+any(d==0) #algum zero?
+d
+sum(1,2,NA,5,na.rm=T) #omitir NAs em funções
+
+########EXTRA########
+set.seed(2023)
+num <- 10
+x <- rnorm(500,250,100)
+mean(x)
+x.means <- numeric(10)
+for(i in 1:num){
+  amostra <- sample(x,size=10,replace=T)
+  x.means[i] <- mean(amostra)
+}
+hist(x.means,breaks=5)
+qqnorm(x.means)
+qqline(x.means)
+teste <- shapiro.test(x.means)
+teste$p.value < 0.05
+Ci_min <- mean(x.means) - 1.96*sd(x.means)/sqrt(10)
+Ci_max <- mean(x.means) + 1.96*sd(x.means)/sqrt(10)
+CI <- c(Ci_min,Ci_max)
+q <- quantile(x.means,c(.25,.975))
+hist(x.means,col='coral',breaks=10,xlab='medias',
+     ylab='medias', main='meu histograma')
+abline(v=CI,col='black',lwd=2,lty=2)
+abline(v=q,col='blue',lwd=2,lty=2)
